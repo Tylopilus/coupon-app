@@ -55,7 +55,6 @@ export function get<T>(storeName: string, key: IDBValidKey): Promise<T | undefin
       const transaction = db.transaction(storeName, 'readonly');
       const store = transaction.objectStore(storeName);
       const request = store.get(key);
-
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
     }).catch(reject);

@@ -1,4 +1,5 @@
 export async function processImageWithAnthropic(imageData: string) {
+	console.log({ imageData });
 	try {
 		// Ensure the imageData is in the correct format
 		const base64Data = imageData.split(",")[1] || imageData;
@@ -10,6 +11,7 @@ export async function processImageWithAnthropic(imageData: string) {
 		}
 
 		console.log("Image data length:", base64Data.length);
+		console.log("image data: ", base64Data);
 
 		const response = await fetch("/api/process-image", {
 			method: "POST",
@@ -20,14 +22,15 @@ export async function processImageWithAnthropic(imageData: string) {
 		});
 
 		if (!response.ok) {
-			const errorData = await response.json();
+			const errorData = await response.text();
 			console.error("API response error:", errorData);
 			throw new Error(
 				`Failed to process image: ${response.status} ${JSON.stringify(errorData)}`,
 			);
 		}
 
-		const result = await response.json();
+		console.log("Result:", response);
+		const result = await response.json().catch((e) => console.log(e));
 		console.log("Processed image result:", result);
 		return result;
 	} catch (error) {

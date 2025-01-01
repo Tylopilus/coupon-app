@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Anthropic } from "@anthropic-ai/sdk";
+import sharp from 'sharp';
+import { Buffer } from 'buffer';
+
+async function compressImage(base64Data: string): Promise<string> {
+	try {
+		const buffer = Buffer.from(base64Data, 'base64');
+		
+		const compressedBuffer = await sharp(buffer)
+			.resize(800, 800, { // Resize to max 800x800 while maintaining aspect ratio
+				fit: 'inside',
+				withoutEnlargement: true
+			})
+			.jpeg({ quality: 80 }) // Convert to JPEG with 80% quality
+			.toBuffer();
+
+		return compressedBuffer.toString('base64');
+	} catch (error) {
+		console.error('Error compressing image:', error);
+		throw error;
+	}
+}
 
 export async function POST(request: NextRequest) {
 	const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -26,6 +47,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+        console.log(imageData.slice(0,20));
 		// Ensure the imageData is in the correct format
 		const base64Data = imageData.startsWith("data:image")
 			? imageData.split(",")[1]
@@ -41,6 +63,9 @@ export async function POST(request: NextRequest) {
 
 		console.log("Image data length:", base64Data.length);
 
+		const compressedBase64 = await compressImage(base64Data);
+		console.log("Compressed image size:", compressedBase64.length);
+
 		const response = await anthropic.messages.create({
 			model: "claude-3-haiku-20240307",
 			max_tokens: 1000,
@@ -50,14 +75,14 @@ export async function POST(request: NextRequest) {
 					content: [
 						{
 							type: "text",
-							text: "Analyze this image of a coupon or store logo. Extract the coupon code, discount value, store name, and expiry date if present. Return the information in JSON format with 'code', 'discount', 'store', and 'expiryDate' fields. If you can't find any of these, leave the respective field empty. For the expiry date, use the format 'YYYY-MM-DD' if possible, or 'No Expiry' if there's no expiration date.",
+							text: "Analyze this image of a coupon or store logo. Extract the coupon code, discount value, store name, and expiry date if present. Return the information in JSON format with 'code', 'discount', 'store', and 'expiryDate' fields. If you can't find any of these, leave the respective field empty. For the expiry date, use the format 'YYYY-MM-DD' if possible, or 'No Expiry' if there's no expiration date. Always respond in proper JSON, even errors. You must ALWAYS respond in proper JSON format. Do not explain why an image cannot be analyzed. Just JSON, nothing else",
 						},
 						{
 							type: "image",
 							source: {
 								type: "base64",
 								media_type: "image/jpeg",
-								data: base64Data,
+								data: compressedBase64,
 							},
 						},
 					],
@@ -82,6 +107,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
+        console.log('content: ', content.text);
 		const result = JSON.parse(content.text);
 		if (
 			!result ||
