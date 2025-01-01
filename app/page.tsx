@@ -1,101 +1,80 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { PlusCircle, Tag, Trash2 } from 'lucide-react'
+import { CouponList } from './components/CouponList'
+import { NotificationHandler } from './components/NotificationHandler'
+import { ConfirmationModal } from './components/ConfirmationModal'
+import { deleteExpiredCoupons, hasExpiredCoupons } from './utils/storage'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  console.log('Home component rendered');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletedCount, setDeletedCount] = useState(0);
+  const [hasExpired, setHasExpired] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const checkExpiredCoupons = async () => {
+      const expired = await hasExpiredCoupons();
+      setHasExpired(expired);
+    };
+    checkExpiredCoupons();
+  }, [refreshTrigger]);
+
+  const handleDeleteExpired = async () => {
+    const count = await deleteExpiredCoupons();
+    setDeletedCount(count);
+    setIsModalOpen(false);
+    const expired = await hasExpiredCoupons();
+    setHasExpired(expired);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleCouponDeleted = async () => {
+    const expired = await hasExpiredCoupons();
+    setHasExpired(expired);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  return (
+    <main className="container mx-auto p-4 max-w-md">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center">
+          <Tag className="mr-2 text-blue-500" />
+          My Coupons
+        </h1>
+        <div className="flex space-x-2">
+          {hasExpired && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 p-2 rounded-full shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              aria-label="Delete expired coupons"
+            >
+              <Trash2 size={24} />
+            </button>
+          )}
+          <Link href="/add-coupon" className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors">
+            <PlusCircle size={24} />
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+      </div>
+      <CouponList onCouponDeleted={handleCouponDeleted} refreshTrigger={refreshTrigger} />
+      <NotificationHandler />
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleDeleteExpired}
+        title="Delete Expired Coupons"
+        message="Are you sure you want to delete all expired coupons? This action cannot be undone."
+      />
+      {deletedCount > 0 && (
+        <div className="mt-4 p-4 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 rounded-md">
+          {deletedCount} expired coupon{deletedCount !== 1 ? 's' : ''} deleted successfully.
+        </div>
+      )}
+    </main>
+  )
 }
+
