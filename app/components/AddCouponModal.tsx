@@ -23,7 +23,7 @@ export function AddCouponModal({ isOpen, onClose, onCouponAdded, store }: AddCou
     noExpiry: false,
     store: '',
     codeImage: '',
-    codeType: '' as 'qr' | 'barcode' | '',
+    codeType: '' as 'qr' | 'barcode',
   })
   const [showCamera, setShowCamera] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -64,7 +64,7 @@ export function AddCouponModal({ isOpen, onClose, onCouponAdded, store }: AddCou
       await addCoupon(newCoupon)
       await checkAndNotifyExpiringCoupons()
       onCouponAdded()
-      setFormData({ code: '', discount: '', expiryDate: '', noExpiry: false, store: '', codeImage: '', codeType: '' })
+      setFormData({ code: '', discount: '', expiryDate: '', noExpiry: false, store: '', codeImage: '', codeType: '' as 'qr' })
     } catch (error) {
       console.error('Error adding coupon:', error)
       setError('Failed to add coupon. Please try again.')
